@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australian Police Enforcement Dashboard - Home</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="antialiased bg-gray-50">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Road Safety Enforcement Dashboard</h1>
+            <nav class="space-x-4">
+                <a href="home.html" class="text-gray-700 hover:text-blue-600 font-medium">Home</a>
+                <a href="breath-drug.html" class="text-gray-700 hover:text-blue-600 font-medium">Drug / Breath Tests</a>
+                <a href="fines.html" class="text-gray-700 hover:text-blue-600 font-medium">Fines</a>
+                <a href="deaths.html" class="text-gray-700 hover:text-blue-600 font-medium">Deaths</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative bg-[url('assets/homehero.jpeg')] bg-cover bg-center bg-no-repeat min-h-[70vh] flex items-center">
+        <div class="container mx-auto text-center px-6 relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-4 drop-shadow-lg">Visualizing Road Safety Enforcement Across Australia</h2>
+            <p class="text-lg text-white mb-6 drop-shadow-md">
+                Explore fines, arrests, breath tests, and drug test results to understand trends and patterns across jurisdictions.
+            </p>
+            <!--<a href="breath-drug.html" class="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition">Explore the Dashboard</a>-->
+        </div>
+        <!-- Overlay for readability -->
+        <div class="absolute inset-0 bg-black opacity-30"></div>
+    </section>
+
+    <!-- About / Purpose Section -->
+    <section class="py-12">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">About This Project</h3>
+                <p class="text-gray-600 mb-4">
+                    This dashboard visualizes Australian road safety enforcement data, providing insights into trends over the years. Users can compare jurisdictions, analyze age groups, and explore different metrics like fines, arrests, and positive test rates.
+                </p>
+                <p class="text-gray-600">
+                    The aim is to make enforcement data more accessible and to support data-driven discussions on road safety.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Sources Section -->
+    <section class="bg-gray-50 py-12">
+        <div class="container mx-auto px-6 text-center">
+            <h3 class="text-3xl font-bold text-gray-800 mb-8">Our Data Sources</h3>
+            <p class="text-gray-600 mb-12">We gather data from trusted Australian agencies and public repositories.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- BITRE Card -->
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+                    <h4 class="text-xl font-semibold mb-2">BITRE</h4>
+                    <p class="text-gray-600 mb-4">
+                        Bureau of Infrastructure and Transport Research Economics publishes road safety enforcement stats.
+                    </p>
+                    <a href="https://www.bitre.gov.au/publications/2024/road-safety-enforcement-data" target="_blank"
+                       class="inline-block border border-gray-400 rounded-md px-4 py-2 text-gray-800 font-medium hover:bg-gray-100 transition">
+                        View Data
+                    </a>
+                </div>
+
+                <!-- GeoJSON Card -->
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+                    <h4 class="text-xl font-semibold mb-2">GeoJSON Map File</h4>
+                    <p class="text-gray-600 mb-4">
+                        Map coordinates for Australian states and territories from a public GitHub repository.
+                    </p>
+                    <a href="https://raw.githubusercontent.com/rowanhogan/australian-states/master/states.geojson" target="_blank"
+                       class="inline-block border border-gray-400 rounded-md px-4 py-2 text-gray-800 font-medium hover:bg-gray-100 transition">
+                        View File
+                    </a>
+                </div>
+
+                <!-- Yearbook Card -->
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+                    <h4 class="text-xl font-semibold mb-2">Infrastructure & Transport Yearbook</h4>
+                    <p class="text-gray-600 mb-4">
+                        Annual driver’s license and transport data from 2024 edition.
+                    </p>
+                    <a href="https://www.bitre.gov.au/publications/2025/australian-infrastructure-and-transport-statistics-yearbook-2024" target="_blank"
+                       class="inline-block border bg-gray-300 rounded-md px-4 py-2 text-gray-800 font-medium hover:bg-gray-100 transition">
+                        View Report
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow mt-12">
+        <div class="container mx-auto px-6 py-6 text-center text-gray-600">
+            &copy; 2025 DV_Group20. All rights reserved.
+        </div>
+    </footer>
+
+</body>
+</html>

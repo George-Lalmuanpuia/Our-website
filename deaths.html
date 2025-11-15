@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australian Road Fatality Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="./css/style.css">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Road Safety Enforcement Dashboard</h1>
+            <nav class="space-x-4">
+                <a href="home.html" class="text-gray-700 hover:text-blue-600 font-medium">Home</a>
+                <a href="breath-drug.html" class="text-gray-700 hover:text-blue-600 font-medium">Drug / Breath Tests</a>
+                <a href="fines.html" class="text-gray-700 hover:text-blue-600 font-medium">Fines</a>
+                <a href="deaths.html" class="text-gray-700 hover:text-blue-600 font-medium">Deaths</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="loading">
+        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        Loading Fatality Data...
+    </div>
+
+    <div id="fatalities-dashboard-container" class="container mx-auto max-w-full p-4 lg:p-8">
+        
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Australian Road Fatality Dashboard</h1>
+            <p class="text-lg text-gray-600">Exploring historical road fatality data (1989-2025)</p>
+            </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-lg shadow">
+            
+            <div>
+                <label for="filter-line-metric" class="block text-sm font-medium text-gray-700">Line Chart Metric</label>
+                <select id="filter-line-metric" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="NumberOfFatalities" selected>Number of Fatalities</option>
+                    <option value="NumberOfFatalCrashes">Number of Fatal Crashes</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="filter-jurisdiction" class="block text-sm font-medium text-gray-700">Select Jurisdiction</label>
+                <select id="filter-jurisdiction" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Historical Fatalities (National)</h2>
+                <p class="text-sm text-gray-500 mb-4">Select a time range below to filter the other charts.</p>
+                <div id="line-chart-container">
+                    <svg id="line-chart-viz" class="w-full" height="300"></svg>
+                    <svg id="line-chart-brush" class="w-full" height="75"></svg>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Fatalities by Jurisdiction</h2>
+                <p id="map-subtitle" class="text-sm text-gray-500 mb-4">Total fatalities for the selected time range.</p>
+                <div id="map-container" class="relative">
+                    <svg id="map-viz" class="w-full h-auto" viewBox="0 0 800 600"></svg>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Fatalities by User Type</h2>
+                    <p id="donut-chart-subtitle" class="text-sm text-gray-500 mb-4">All Australia, all time.</p>
+                    <div id="donut-chart-container" class="relative">
+                        <svg id="donut-chart-viz" class="w-full" height="250"></svg>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Fatalities by Age Group</h2>
+                    <p id="bar-chart-subtitle" class="text-sm text-gray-500 mb-4">All Australia, all time.</p>
+                    <div id="bar-chart-container">
+                        <svg id="bar-chart-viz" class="w-full" height="250"></svg>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script src="./js/shared-variables.js"></script>
+    <script src="./js/shared-constants.js"></script>
+    <script src="./js/fatalities.js"></script>
+    <script type="module" src="./js/load-data.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+</html>

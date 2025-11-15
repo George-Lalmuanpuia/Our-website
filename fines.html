@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australian Police Enforcement Dashboard - Fines</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="./css/style.css">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Road Safety Enforcement Dashboard</h1>
+            <nav class="space-x-4">
+                <a href="home.html" class="text-gray-700 hover:text-blue-600 font-medium">Home</a>
+                <a href="breath-drug.html" class="text-gray-700 hover:text-blue-600 font-medium">Drug / Breath Tests</a>
+                <a href="fines.html" class="text-gray-700 hover:text-blue-600 font-medium">Fines</a>
+                <a href="deaths.html" class="text-gray-700 hover:text-blue-600 font-medium">Deaths</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="loading">
+        Loading Dashboard Data...
+    </div>
+
+    <div id="fines-dashboard-container" class="container mx-auto max-w-full p-4 lg:p-8">
+        
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Fines, Arrests & Charges Dashboard</h1>
+            <p class="text-lg text-gray-600">Exploring offenses by age group and jurisdiction</p>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 p-4 bg-white rounded-lg shadow">
+            <div>
+                <label for="filter-year" class="block text-sm font-medium text-gray-700">Select Year</label>
+                <select id="filter-year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </select>
+            </div>
+            
+            <div>
+                <label for="filter-jurisdiction" class="block text-sm font-medium text-gray-700">Select Jurisdiction</label>
+                <select id="filter-jurisdiction" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </select>
+            </div>
+
+            <div>
+                <label for="filter-metric" class="block text-sm font-medium text-gray-700">Select Offense</label>
+                <select id="filter-metric" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </select>
+            </div>
+            
+            <div>
+                <label for="filter-age" class="block text-sm font-medium text-gray-700">Select Age Group</label>
+                <select id="filter-age" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </select>
+            </div>
+            
+            <div>
+                <label for="filter-bar-metric" class="block text-sm font-medium text-gray-700">Chart Metric</label>
+                <select id="filter-bar-metric" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="FINES" selected>Fines</option>
+                    <option value="ARRESTS">Arrests</option>
+                    <option value="CHARGES">Charges</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Offenses by Age Group</h2>
+                <p id="bar-chart-subtitle" class="text-sm text-gray-500 mb-4">Showing data...</p>
+                <div id="bar-chart-container">
+                    <svg id="bar-chart-viz" class="w-full" height="300"></svg>
+                    <div id="bar-chart-legend" class="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2"></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Enforcement by Jurisdiction</h2>
+                <p id="map-subtitle" class="text-sm text-gray-500 mb-4">Showing data...</p>
+                <div id="map-container" class="relative">
+                    <svg id="map-viz" class="w-full h-auto" viewBox="0 0 800 600"></svg>
+                    </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script src="./js/shared-variables.js"></script>
+    <script src="./js/shared-constants.js"></script>
+    <script src="./js/fines.js"></script> 
+    <script type="module" src="./js/load-data.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+</html>
