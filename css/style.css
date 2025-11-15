@@ -68,6 +68,13 @@ body {
     stroke-width: 2px;
 }
 
+.active {
+    background-color: yellow;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+
 /* Loading indicator */
 #loading {
     position: fixed;

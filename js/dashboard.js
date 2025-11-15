@@ -349,7 +349,7 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
         .data(legendColors)
         .join("rect")
         .attr("x", (d, i) => i * legendWidth)
-        .attr("y", 0)
+        .attr("y", 15)
         .attr("width", legendWidth)
         .attr("height", 10)
         .attr("fill", d => d);
