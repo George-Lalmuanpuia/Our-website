@@ -17,10 +17,19 @@ const parseYearMetricRow = (d) => {
     return d;
 };
 
-// ... (other parsing functions: parseLicenseRow, parsePositiveBreathRow, etc. are unchanged) ...
+
+const parseLicenseBySexRow = (d) => {
+    d.YEAR = +d.YEAR;
+    d.LicenceHolders = +d.LicenceHolders;
+    d.Jurisdiction = d["Jurisdiction"];
+    return d;
+};
+
+
 const parseLicenseRow = (d) => {
     d.Year = +d.Year;
     d.TotalLicence = +d.TotalLicence;
+    d.Jurisdiction = d["Jurisdiction"];
     return d;
 };
 
@@ -62,41 +71,51 @@ function handleDataLoadError(error) {
     d3.select("#loading").text("Error loading dashboard data. Please check console.");
 }
 
-// --- NEW: Loader for Map + Line Chart Page ---
+// --- UPDATED: Loader for Map + Line Chart Page ---
 function loadEnforcementMapLineData() {
     return Promise.all([
         d3.json(geojsonURL),
         d3.csv("./data/YearMetricCountByJurisdiction.csv", parseYearMetricRow),
         d3.csv("./data/PositiveBreathTestCountInEachJurisdictionPerYear.csv", parsePositiveBreathRow),
-        d3.csv("./data/PositiveDrugTestCountInEachJurisdictionPerYear.csv", parsePositiveDrugRow)
-    ]).then(([geo, yearMetric, positiveBreath, positiveDrug]) => {
+        d3.csv("./data/PositiveDrugTestCountInEachJurisdictionPerYear.csv", parsePositiveDrugRow),
+        d3.csv("./data/TotalLicenceHolders.csv", parseLicenseRow),
+        d3.csv("./data/TotalLicenceHoldersBySex.csv", parseLicenseBySexRow)
+    ]).then(([geo, yearMetric, positiveBreath, positiveDrug, licenses, licensesBySex]) => {
         
         // 1. Assign data to global vars
         geoData = geo;
         yearMetricData = yearMetric;
         positiveBreathData = positiveBreath;
         positiveDrugData = positiveDrug;
+        licenseData = licenses;
+        licenseBySexData = licensesBySex;
 
-        // 2. Process data (needed by this page)
+        licenseMap = d3.rollup(
+            licenseData,
+            v => d3.sum(v, d => d.TotalLicence),
+            d => `${d.Year}-${d.Jurisdiction}` // Key: "2024-NSW"
+        );
+
+        // 2. Process data (Reverted to your preference)
         allYears = [...new Set(yearMetricData.filter(d => d).map(d => d.YEAR))].sort((a, b) => b - a);
         
         // 3. Pre-process map data for the latest year
-        if (typeof processMapData === "function") {
-             processMapData(allYears[0], positiveDrugData);
+        if (typeof processMapData === "function" && allYears.length > 0) {
+            processMapData(allYears[0], positiveDrugData);
         }
     });
 }
 
-// --- NEW: Loader for Fines Page ---
+// --- Loader for Fines Page ---
 function loadEnforcementFinesData() {
     return Promise.all([
         d3.csv("./data/Fines.csv", parseFinesRow),
-        d3.json(geojsonURL) // ADDED: Load the map file
+        d3.json(geojsonURL) 
     ]).then(([fines, geo]) => {
         
         // 1. Assign data to global vars
         finesData = fines;
-        geoData = geo; // ADDED: Assign the map data
+        geoData = geo; 
 
         // 2. Process data (needed by this page)
         metrics = ["All", ...new Set(finesData.filter(d => d).map(d => d.METRIC).sort())];
@@ -106,7 +125,7 @@ function loadEnforcementFinesData() {
 }
 
 
-// --- FATALITIES DATA LOADER (Unchanged) ---
+// --- FATALITIES DATA LOADER ---
 function loadFatalitiesData() {
     Promise.all([
         d3.json(geojsonURL),
@@ -139,26 +158,27 @@ function loadFatalitiesData() {
     }).catch(handleDataLoadError);
 }
 
-// --- PAGE ROUTER (Updated) ---
+// --- PAGE ROUTER ---
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('enforcement-dashboard-container')) {
         // This is the breath-drug.html page
-        loadEnforcementMapLineData().then(() => { // CHANGED
+        loadEnforcementMapLineData().then(() => { 
             // Functions from dashboard.js
             setupFilters();
             setupMap();
             setupLineChart();
+            setupHBarChart();
             updateVisualizations();
             d3.select("#loading").style("display", "none");
         }).catch(handleDataLoadError);
 
     } else if (document.getElementById('fines-dashboard-container')) {
         // This is the fines.html page
-        loadEnforcementFinesData().then(() => { // CHANGED
+        loadEnforcementFinesData().then(() => { 
             // Functions from fines.js
             setupFinesFilters();
             setupBarChart();
-            setupMap();
+            setupMap(); 
             updateBarVisualizations();
             d3.select("#loading").style("display", "none");
         }).catch(handleDataLoadError);

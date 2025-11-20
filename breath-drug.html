@@ -41,6 +41,16 @@
             <p class="text-lg text-gray-600">Exploring road safety enforcement data across Australia</p>
         </header>
 
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r shadow-sm">
+            <h3 class="font-bold text-blue-800 mb-1">Impaired Driving Enforcement</h3>
+            <p class="text-gray-700 leading-relaxed">
+                High-visibility testing is a proven deterrent against alcohol and drug-impaired driving. 
+                This dashboard analyzes the scale of Random Breath Testing (RBT) and Roadside Drug Testing (RDT) programs. 
+                Crucially, the "Test Rate" chart normalizes this data against the number of licensed drivers in each state, 
+                providing a fair comparison of enforcement intensity regardless of the state's population size.
+            </p>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 p-4 bg-white rounded-lg shadow">
             
             <div>
@@ -60,6 +70,7 @@
                 <select id="filter-map-metric" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                     <option value="breath_test_percent" selected>Positive Breath Test %</option>
                     <option value="drug_test_total">Total Drug Tests</option>
+                    <option value="breath_test_total">Total Breath Tests</option>
                     <option value="drug_test_percent">Positive Drug Test %</option>
                 </select>
             </div>
@@ -73,11 +84,27 @@
                 <p id="map-subtitle" class="text-sm text-gray-500 mb-4">Click a state to filter charts. Showing data for 2024.</p>
                 <div id="map-container" class="relative">
                     <svg id="map-viz" class="w-full h-auto" viewBox="0 0 800 600"></svg>
-                </div>
+                    </div>
             </div>
 
             <div class="lg:col-span-2 space-y-6">
                 
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold text-gray-800">Test Rate (per 10,000 Holders)</h2>
+                        <select id="filter-hbar-metric" class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <option value="breath_tests_conducted" selected>Total Breath Tests</option>
+                            <option value="drug_tests_conducted">Total Drug Tests</option>
+                        </select>
+                    </div>
+                    <p id="hbar-chart-subtitle" class="text-sm text-gray-500 mb-4">Showing data for 2024.</p>
+                    <div id="hbar-chart-container">
+    
+                        <p id="hbar-chart-error" class="text-sm text-red-600 mb-4" style="display: none;"></p>
+                        
+                        <svg id="hbar-chart-viz" class="w-full" height="300"></svg>
+                    </div>
+                </div>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <div class="flex justify-between items-center mb-2">
                         <h2 class="text-xl font-semibold text-gray-800">Historical Enforcement Trends</h2>

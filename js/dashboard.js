@@ -47,8 +47,8 @@ function processMapData(year, positiveDrugData) {
             breath_test_percent: breathPercent,
             drug_test_percent: drugPercent,
             drug_test_total: totalDrug,
-            // Store raw numbers for tooltip
-            totalBreathTests: totalBreath,
+            breath_test_total: totalBreath,
+            
             positiveBreathTests: positiveBreath,
             positiveDrugTests: positiveDrug 
         });
@@ -62,11 +62,11 @@ function setupFilters() {
     // Populate Year filter
     d3.select("#filter-year")
         .selectAll("option")
-        .data(allYears)
+        .data(allYears) 
         .join("option")
         .attr("value", d => d)
         .text(d => d)
-        .property("selected", d => d === allYears[0]); // Select latest year
+        .property("selected", d => d === allYears[0]); // Selects 2024
 
     // Populate Jurisdiction filter
     const jurisdictions = ["All", ...Object.keys(stateNameMapping)];
@@ -77,10 +77,8 @@ function setupFilters() {
         .attr("value", d => d)
         .text(d => d === "All" ? "All Australia" : stateNameMapping[d]);
 
-    // NOTE: Metric and Age filters removed, as they only applied to the bar chart
-
     // Add event listeners to filters for THIS page
-    d3.selectAll("#filter-map-metric, #filter-line-metric, #filter-year, #filter-jurisdiction")
+    d3.selectAll("#filter-map-metric, #filter-line-metric, #filter-year, #filter-jurisdiction, #filter-hbar-metric")
         .on("change", updateVisualizations);
 }
 
@@ -92,10 +90,11 @@ function setupMap() {
     mapSvg = d3.select("#map-viz");
 
     // --- Projection ---
+    // CHANGED: Increased y-translation divisor to 2.4 to move map UP
     mapProjection = d3.geoMercator()
         .center([133, -25])
         .scale(mapWidth * 0.9)
-        .translate([mapWidth / 2, mapHeight / 2.2]);
+        .translate([mapWidth / 2, mapHeight / 2.4]); 
 
     mapPath = d3.geoPath().projection(mapProjection);
 
@@ -131,12 +130,53 @@ function setupMap() {
         .on("mouseout", hideTooltip);
     
     // --- Legend ---
+    // The position here (0.9 * mapHeight) stays the same, 
+    // but since the map is moved up, they won't overlap.
     mapSvg.append("g")
         .attr("class", "legendQuant")
         .attr("transform", `translate(${mapWidth * 0.05}, ${mapHeight * 0.9})`);
 }
 
-// --- BAR CHART FUNCTIONS (setupBarChart, updateBarChart) REMOVED ---
+// --- UPDATED: Horizontal Bar Chart Setup (Corrected) ---
+function setupHBarChart() {
+    hBarMargin = { top: 20, right: 30, bottom: 40, left: 100 };
+    const container = d3.select("#hbar-chart-container");
+    
+    // Ensure the container exists (assuming it was added to breath-drug.html)
+    if (!container.node()) return; 
+
+    hBarChartWidth = container.node().getBoundingClientRect().width - hBarMargin.left - hBarMargin.right;
+    hBarChartHeight = 300 - hBarMargin.top - hBarMargin.bottom;
+
+    hBarChartSvg = d3.select("#hbar-chart-viz")
+        .attr("width", hBarChartWidth + hBarMargin.left + hBarMargin.right)
+        .attr("height", hBarChartHeight + hBarMargin.top + hBarMargin.bottom)
+        .append("g")
+        .attr("transform", `translate(${hBarMargin.left},${hBarMargin.top})`);
+    
+    // Scales (X is value, Y is categorical)
+    xHBarScale = d3.scaleLinear().range([0, hBarChartWidth]);
+    yHBarScale = d3.scaleBand().range([hBarChartHeight, 0]).padding(0.1);
+    hBarColorScale = d3.scaleOrdinal().domain(["Male", "Female", "Unknown"]).range(["#2563eb", "#f43f5e", "#9ca3af"]); 
+
+    // Axes
+    hBarChartSvg.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${hBarChartHeight})`);
+
+    hBarChartSvg.append("g")
+        .attr("class", "y-axis");
+
+    // X-axis Label
+    hBarChartSvg.append("text")
+        .attr("class", "x-axis-label")
+        .attr("transform", `translate(${hBarChartWidth / 2}, ${hBarChartHeight + hBarMargin.bottom - 5})`)
+        .style("text-anchor", "middle")
+        .attr("fill", "#374151")
+        .text("Test Rate (per 10,000 Licence Holders)");
+}
+// --- END UPDATE ---
+
 
 function setupLineChart() {
     lineMargin = { top: 20, right: 30, bottom: 40, left: 60 };
@@ -248,55 +288,63 @@ function updateVisualizations() {
     // 1. Get all current filter values
     const selectedYear = +d3.select("#filter-year").property("value");
     const selectedJurisdiction = d3.select("#filter-jurisdiction").property("value") === "All" ? null : d3.select("#filter-jurisdiction").property("value");
-    // const selectedMetric = d3.select("#filter-metric").property("value"); // Removed
-    // const selectedAgeGroup = d3.select("#filter-age").property("value"); // Removed
     const selectedMapMetric = d3.select("#filter-map-metric").property("value");
-    // const selectedBarMetric = d3.select("#filter-bar-metric").property("value"); // Removed
     const selectedLineMetric = d3.select("#filter-line-metric").property("value");
+    const selectedHBarMetric = d3.select("#filter-hbar-metric").property("value");
     
     // 2. Update subtitles
     let jurisdictionText = selectedJurisdiction ? stateNameMapping[selectedJurisdiction] : "all of Australia";
     
-    // d3.select("#bar-chart-subtitle").text(`Showing data for ${jurisdictionText} in ${selectedYear}.`); // Removed
     d3.select("#line-chart-subtitle").text(`Showing data for ${jurisdictionText}.`);
     d3.select("#map-subtitle").text(`Click a state to filter charts. Showing data for ${selectedYear}.`);
+    d3.select("#hbar-chart-subtitle").text(`Showing data for ${jurisdictionText} in ${selectedYear}.`);
 
-    // 3. Filter fines data (for bar chart) // Removed
-    // let filteredFines = ... // Removed
-
-    // 4. Re-process Map Data for the selected year
+    // 3. Re-process Map Data for the selected year
     processMapData(selectedYear, positiveDrugData);
 
-    // 5. Update Map
+    // 4. Update Map
     updateMap(selectedMapMetric, selectedJurisdiction, selectedYear);
 
-    // 6. Update Bar Chart // Removed
-    // updateBarChart(...) // Removed
-
-    // 7. Update Line Chart
+    // 5. Update Line Chart
     updateLineChart(selectedLineMetric, selectedJurisdiction);
+    
+    // 6. Update Horizontal Bar Chart
+    updateHBarChart(selectedYear, selectedHBarMetric, selectedJurisdiction);
 }
 
 function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
     let dataValues = [];
-    let colorScheme = d3.schemeBlues[9]; // Default for percentages
-    let legendFormat = (d) => `${d.toFixed(1)}%`; // Default for percentages
+    let colorScheme = d3.schemeBlues[9]; 
+    let legendFormat = (d) => `${d.toFixed(1)}%`; 
     let subtitle = `Showing Positive Breath Test % (${selectedYear})`;
+    let labelFormat;
 
     // Set scale and labels based on selected metric
     if (mapMetric === "breath_test_percent") {
         dataValues = Array.from(mapMetricData.values()).map(d => d.breath_test_percent);
         colorScheme = d3.schemeBlues[9];
+        labelFormat = (val) => `${val.toFixed(1)}%`;
         legendFormat = (d) => `${d.toFixed(1)}%`;
         subtitle = `Showing Positive Breath Test % (${selectedYear})`;
+    
+    } else if (mapMetric === "breath_test_total") {  // --- NEW BLOCK ---
+        dataValues = Array.from(mapMetricData.values()).map(d => d.breath_test_total);
+        colorScheme = d3.schemePurples[9]; // Use Purple to distinguish from Breath %
+        labelFormat = d3.format(".2s"); // Format as 1.5M, 500k, etc.
+        legendFormat = d3.format(".2s");
+        subtitle = `Showing Total Breath Tests Conducted (${selectedYear})`;
+
     } else if (mapMetric === "drug_test_total") {
         dataValues = Array.from(mapMetricData.values()).map(d => d.drug_test_total);
         colorScheme = d3.schemeGreens[9];
-        legendFormat = d3.format(".2s"); // e.g., 1.5k
+        labelFormat = d3.format(".2s");
+        legendFormat = d3.format(".2s"); 
         subtitle = `Showing Total Drug Tests Conducted (${selectedYear})`;
+    
     } else if (mapMetric === "drug_test_percent") {
         dataValues = Array.from(mapMetricData.values()).map(d => d.drug_test_percent);
         colorScheme = d3.schemeReds[9];
+        labelFormat = (val) => `${val.toFixed(1)}%`;
         legendFormat = (d) => `${d.toFixed(1)}%`;
         subtitle = `Showing Positive Drug Test % (${selectedYear})`;
     }
@@ -312,7 +360,7 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
         .attr("fill", d => {
             const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
             const stateData = mapMetricData.get(stateAbbr);
-            // Handle cases where data might be missing for a metric
+            // Use bracket notation to access the dynamic key (e.g., stateData["totalBreathTests"])
             const value = stateData ? stateData[mapMetric] : 0;
             return (value === undefined || value === 0) ? "#e5e7eb" : mapColorScale(value);
         })
@@ -328,7 +376,7 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
             let html = `<strong>${stateName} (${selectedYear})</strong><br/>`;
             if (stateData) {
                 html += `Positive Breath Test %: ${stateData.breath_test_percent.toFixed(2)}%<br/>`;
-                html += ` (Pos: ${stateData.positiveBreathTests.toLocaleString()} / Total: ${stateData.totalBreathTests.toLocaleString()})<br/>`;
+                html += ` (Pos: ${stateData.positiveBreathTests.toLocaleString()} / Total: ${stateData.breath_test_total.toLocaleString()})<br/>`;
                 html += `Total Drug Tests: ${stateData.drug_test_total.toLocaleString()}<br/>`;
                 html += `Positive Drug Test %: ${stateData.drug_test_percent.toFixed(2)}%<br/>`;
                 html += ` (Pos: ${stateData.positiveDrugTests.toLocaleString()} / Total: ${stateData.drug_test_total.toLocaleString()})`;
@@ -338,9 +386,54 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
             showTooltip(event, html);
         });
     
+    // Draw Text Labels on Map
+    const colorRange = mapColorScale.range();
+    const splitIndex = Math.floor(colorRange.length / 2); 
+
+    mapSvg.selectAll(".state-label")
+        .data(geoData.features, d => d.properties.STATE_NAME)
+        .join(
+            enter => enter.append("text")
+                .attr("class", "state-label")
+                .attr("pointer-events", "none")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .attr("font-size", "12px")
+                .style("font-weight", "bold")
+                .style("paint-order", "stroke")
+                .attr("stroke-width", "3px")
+                .attr("stroke-linejoin", "round")
+                .attr("x", d => mapPath.centroid(d)[0])
+                .attr("y", d => mapPath.centroid(d)[1]),
+            update => update
+        )
+        .text(d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const stateData = mapMetricData.get(stateAbbr);
+            const value = stateData ? stateData[mapMetric] : 0;
+            return value > 0 ? labelFormat(value) : "";
+        })
+        .attr("fill", d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const stateData = mapMetricData.get(stateAbbr);
+            const value = stateData ? stateData[mapMetric] : 0;
+            const color = mapColorScale(value);
+            const colorIndex = colorRange.indexOf(color);
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "white" : "#374151";
+        })
+        .attr("stroke", d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const stateData = mapMetricData.get(stateAbbr);
+            const value = stateData ? stateData[mapMetric] : 0;
+            const color = mapColorScale(value);
+            const colorIndex = colorRange.indexOf(color);
+
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "#374151" : "white";
+        })
+
     // Update Legend
     const legend = mapSvg.select(".legendQuant");
-    legend.selectAll("*").remove(); // Clear old legend
+    legend.selectAll("*").remove(); 
     
     const legendColors = mapColorScale.range();
     const legendWidth = mapWidth * 0.9 / legendColors.length;
@@ -349,7 +442,7 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
         .data(legendColors)
         .join("rect")
         .attr("x", (d, i) => i * legendWidth)
-        .attr("y", 15)
+        .attr("y", 0)
         .attr("width", legendWidth)
         .attr("height", 10)
         .attr("fill", d => d);
@@ -370,7 +463,161 @@ function updateMap(mapMetric, selectedJurisdiction, selectedYear) {
         .text(legendFormat(maxVal));
 }
 
-// --- updateBarChart() REMOVED ---
+// --- UPDATED: Horizontal Bar Chart Update Function (Corrected) ---
+function updateHBarChart(selectedYear, selectedHBarMetric, selectedJurisdiction) {
+    
+    // 1. Setup based on metric selection
+    const isBreath = selectedHBarMetric === "breath_tests_conducted";
+    const metricKey = isBreath ? 'breath_tests_conducted' : 'drug_tests_conducted';
+    const metricTitle = isBreath ? 'Total Breath Tests' : 'Total Drug Tests';
+    
+    // --- 2. Calculate Rate (Tests per 10,000 Holders) ---
+    
+    // Filter test data for the selected year and metric
+    const totalMetricForYear = yearMetricData.filter(d => 
+        d.YEAR === selectedYear && d.METRIC === metricKey
+    );
+    
+    // Total Licenses (national, aggregated)
+    const totalLicensesByJurisdiction = d3.rollup(
+        licenseData.filter(d => d.Year === selectedYear),
+        v => d3.sum(v, d => d.TotalLicence),
+        d => d.Jurisdiction
+    );
+
+    // Total Tests Conducted
+    const totalTestsByJurisdiction = d3.rollup(
+        totalMetricForYear,
+        v => d3.sum(v, d => d.COUNT),
+        d => d.JURISDICTION
+    );
+
+    // Combine, calculate rate, and filter
+    let processedData = Array.from(totalTestsByJurisdiction, ([jurisdiction, totalTests]) => {
+        const totalLicenses = totalLicensesByJurisdiction.get(jurisdiction) || 0;
+        const ratePer10k = totalLicenses > 0 ? (totalTests / totalLicenses) * 10000 : 0;
+        
+        return {
+            jurisdiction: jurisdiction,
+            rate: ratePer10k,
+            totalTests: totalTests,
+            totalLicenses: totalLicenses
+        };
+    }).filter(d => d.jurisdiction !== "Australia") // Exclude 'Australia' pseudo-jurisdiction
+      .sort((a, b) => b.rate - a.rate);
+
+    // Filter to a single jurisdiction if one is selected (used for error handling)
+    if (selectedJurisdiction) {
+        processedData = processedData.filter(d => d.jurisdiction === selectedJurisdiction);
+        if (processedData.length === 0) {
+             d3.select("#hbar-chart-error").style("display", null).text(`No ${metricTitle} data available for ${stateNameMapping[selectedJurisdiction]} in ${selectedYear}.`);
+             hBarChartSvg.selectAll(".bar-container").remove(); 
+             return;
+        }
+    }
+    d3.select("#hbar-chart-error").style("display", "none");
+
+    // --- 3. Update Scales & Axes (Bar Height Fix Included) ---
+    
+    const domainJurisdictions = processedData.map(d => d.jurisdiction);
+    
+    // Y-scale range is fixed to the container height to ensure correct bandwidth calculation
+    yHBarScale
+        .domain(domainJurisdictions)
+        .range([hBarChartHeight, 0]); 
+
+    xHBarScale.domain([0, d3.max(processedData, d => d.rate) || 1]).nice();
+    
+    // Update X-axis
+    hBarChartSvg.select(".x-axis")
+        .transition().duration(300)
+        .call(d3.axisBottom(xHBarScale).ticks(5).tickFormat(d3.format(".1f"))); 
+
+    // Update Y-axis (with full state name tick formatting)
+    hBarChartSvg.select(".y-axis")
+        .transition().duration(300)
+        .call(d3.axisLeft(yHBarScale).tickFormat(d => d.Jurisdiction || d).tickSize(0));
+        
+    // Update X-axis label
+    hBarChartSvg.select(".x-axis-label").text(`${metricTitle} Rate (per 10,000 Licence Holders)`);
+
+    // Calculate the bar height once after the yHBarScale domain is set
+    const barHeight = yHBarScale.bandwidth(); 
+    
+    // --- 4. Draw Bars and Text Labels ---
+
+    // Create a group for each bar + text combination for easier management
+    const barGroups = hBarChartSvg.selectAll(".bar-container")
+        .data(processedData, d => d.jurisdiction)
+        .join(
+            enter => enter.append("g")
+                .attr("class", "bar-container")
+                .attr("transform", d => `translate(0, ${yHBarScale(d.jurisdiction)})`),
+            update => update.call(update => update.transition().duration(500)
+                .attr("transform", d => `translate(0, ${yHBarScale(d.jurisdiction)})`)
+            ),
+            exit => exit.call(exit => exit.transition().duration(500)
+                .style("opacity", 0)
+                .remove()
+            )
+        );
+        
+    // --- Draw the Rectangles (Bars) ---
+    barGroups.selectAll("rect.bar")
+        .data(d => [d])
+        .join(
+            enter => enter.append("rect")
+                .attr("class", "bar")
+                .attr("fill", isBreath ? "#4338ca" : "#059669")
+                .attr("x", xHBarScale(0))
+                .attr("height", barHeight) 
+                .attr("width", 0)
+                .call(enter => enter.transition().duration(500)
+                    .attr("width", d => xHBarScale(d.rate))),
+            update => update
+                .call(update => update.transition().duration(500)
+                    .attr("height", barHeight)
+                    .attr("width", d => xHBarScale(d.rate))
+                    .attr("fill", isBreath ? "#4338ca" : "#059669")
+                )
+        )
+        .on("mouseover", (event, d) => {
+            showTooltip(event, `
+                <strong>${stateNameMapping[d.jurisdiction]} (${selectedYear})</strong><br/>
+                ${metricTitle} Rate: ${d.rate.toFixed(2)} / 10k Holders<br/>
+                Total Tests: ${d.totalTests.toLocaleString()}<br/>
+                Total Holders: ${d.totalLicenses.toLocaleString()}
+            `);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseout", hideTooltip);
+
+    // --- Draw the Text Labels (The part that adds the value inside the bar) ---
+    barGroups.selectAll("text.bar-label")
+        .data(d => [d])
+        .join(
+            enter => enter.append("text")
+                .attr("class", "bar-label")
+                .attr("x", xHBarScale(0)) // Start text at 0 for transition
+                .attr("y", barHeight / 2) // Center vertically
+                .attr("dy", "0.35em")
+                .text(d => d.rate.toFixed(0)) // Display the rate, rounded
+                .attr("fill", "white")
+                .style("font-weight", "bold")
+                .style("font-size", "12px")
+                .style("text-anchor", "end") // Anchor to the end of the bar
+                .call(enter => enter.transition().duration(500)
+                    .attr("x", d => xHBarScale(d.rate) - 5)),
+            update => update
+                .call(update => update.transition().duration(500)
+                    .attr("y", barHeight / 2) 
+                    .attr("x", d => xHBarScale(d.rate) - 5)
+                    .text(d => d.rate.toFixed(0))
+                )
+        );
+}
+// --- END UPDATE ---
+
 
 function updateLineChart(lineMetric, selectedJurisdiction) {
     let jurisTotalData, jurisPositiveData, totalMetricName, positiveMetricName;
@@ -457,7 +704,6 @@ function onLineChartMousemove(event) {
     const d0Total = totalByYear[iTotal - 1];
     const d1Total = totalByYear[iTotal];
     
-    // FIX: Add boundary checks for d0/d1 before calculating dTotal
     let dTotal;
     if (d0Total && d1Total) {
         dTotal = (x0 - d0Total.YEAR > d1Total.YEAR - x0) ? d1Total : d0Total;
@@ -471,7 +717,6 @@ function onLineChartMousemove(event) {
     const d0Positive = positiveByYear[iPositive - 1];
     const d1Positive = positiveByYear[iPositive];
 
-    // FIX: Add boundary checks for d0/d1 before calculating dPositive
     let dPositive;
     if (d0Positive && d1Positive) {
         dPositive = (x0 - d0Positive.YEAR > d1Positive.YEAR - x0) ? d1Positive : d0Positive;

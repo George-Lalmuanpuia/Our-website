@@ -38,7 +38,16 @@
         <header class="mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Australian Road Fatality Dashboard</h1>
             <p class="text-lg text-gray-600">Exploring historical road fatality data (1989-2025)</p>
-            </header>
+        </header>
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r shadow-sm">
+            <h3 class="font-bold text-red-800 mb-1">Understanding Road Trauma</h3>
+            <p class="text-gray-700 leading-relaxed">
+                Road fatalities are more than just statistics; they represent a significant social and economic cost to the community. 
+                This dashboard visualizes BITRE data to track long-term national trends, identify high-risk road user types (such as pedestrians or motorcyclists), 
+                and analyze the age demographics most affected by fatal crashes. Use the brush tool on the line chart to filter specific historical periods.
+            </p>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-lg shadow">
             
@@ -99,6 +108,13 @@
     </div>
 
     <div id="tooltip"></div>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow mt-12">
+        <div class="container mx-auto px-6 py-6 text-center text-gray-600">
+            &copy; 2025 DV_Group20. All rights reserved.
+        </div>
+    </footer>
 
     <script src="./js/shared-variables.js"></script>
     <script src="./js/shared-constants.js"></script>
