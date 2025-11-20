@@ -83,8 +83,7 @@ function setupFilters() {
 }
 
 function setupMap() {
-    const container = d3.select("#map-container");
-    mapWidth = container.node().getBoundingClientRect().width;
+    mapWidth = 800;
     mapHeight = 600;
 
     mapSvg = d3.select("#map-viz");
