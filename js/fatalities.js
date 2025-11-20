@@ -241,7 +241,7 @@ function setupDeathDonutChart() {
 }
 
 function setupDeathBarChart() {
-    barMargin = { top: 20, right: 20, bottom: 40, left: 50 };
+    barMargin = { top: 20, right: 20, bottom: 60, left: 50 };
 
     barChartSvg = d3.select("#bar-chart-viz")
         .append("g");
@@ -263,11 +263,10 @@ function setupDeathBarChart() {
         .attr("fill", "#374151")
         .text("Total Fatalities");
 
+    // CHANGED: Removed fixed dx/dy. Only set static properties here.
     barChartSvg.append("text")
         .attr("class", "x-axis-label")
-        .attr("dx", "15em")
-        .attr("dy", "14em")
-        .attr("text-anchor", "bottom")
+        .attr("text-anchor", "middle") // Center text on its coordinates
         .attr("fill", "#374151")
         .text("Age Groups");
 }
@@ -323,7 +322,7 @@ function updateDeathVisualizations() {
 }
 
 function updateDeathMap(filteredData) {
-    const viewBoxWidth = 800;
+    const viewBoxWidth = 800; // Using fixed width as per previous fix
 
     const fatalitiesByState = d3.rollup(filteredData, 
         v => v.length, 
@@ -345,7 +344,51 @@ function updateDeathMap(filteredData) {
             const count = fatalitiesByState.get(stateName) || 0;
             showTooltip(event, `<strong>${stateName}</strong><br/>Total Fatalities: ${count.toLocaleString()}`);
         });
+
+    // --- ADDED: Draw Text Labels on Map ---
+    const colorRange = mapColorScale.range();
+    const splitIndex = Math.floor(colorRange.length / 2); 
+    // Fatalities are usually smaller numbers (hundreds), so standard comma format is better than 1.2k
+    const labelFormat = d3.format(","); 
+
+    mapSvg.selectAll(".state-label")
+        .data(geoData.features, d => d.properties.STATE_NAME)
+        .join(
+            enter => enter.append("text")
+                .attr("class", "state-label")
+                .attr("pointer-events", "none")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .attr("font-size", "10px")
+                .style("font-weight", "bold")
+                .style("paint-order", "stroke") 
+                .attr("stroke-width", "3px")    
+                .attr("stroke-linejoin", "round")
+                .attr("x", d => mapPath.centroid(d)[0])
+                .attr("y", d => mapPath.centroid(d)[1]),
+            update => update
+        )
+        .text(d => {
+            const stateName = d.properties.STATE_NAME;
+            const count = fatalitiesByState.get(stateName) || 0;
+            return count > 0 ? labelFormat(count) : "";
+        })
+        .attr("fill", d => {
+            const stateName = d.properties.STATE_NAME;
+            const count = fatalitiesByState.get(stateName) || 0;
+            const color = mapColorScale(count);
+            const colorIndex = colorRange.indexOf(color);
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "white" : "#374151";
+        })
+        .attr("stroke", d => {
+            const stateName = d.properties.STATE_NAME;
+            const count = fatalitiesByState.get(stateName) || 0;
+            const color = mapColorScale(count);
+            const colorIndex = colorRange.indexOf(color);
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "#374151" : "white";
+        });
     
+    // Update Legend
     const legend = mapSvg.select(".legendQuant");
     legend.selectAll("*").remove();
     
@@ -357,7 +400,7 @@ function updateDeathMap(filteredData) {
         .data(legendColors)
         .join("rect")
         .attr("x", (d, i) => i * legendWidth)
-        .attr("y", 30)
+        .attr("y", 30) // Y-offset kept to avoid overlap (assuming map is translated up)
         .attr("width", legendWidth)
         .attr("height", 10)
         .attr("fill", d => d);
@@ -528,10 +571,16 @@ function updateDeathBarChart(filteredData) {
         
     barChartSvg.attr("transform", `translate(${barMargin.left},${barMargin.top})`);
     
+    // Update Y-axis label position
     barChartSvg.select(".y-axis-label")
         .attr("y", 0 - barMargin.left + 10)
         .attr("x", 0 - (barHeight / 2));
-        
+
+    // CHANGED: Dynamically center the X-axis label
+    barChartSvg.select(".x-axis-label")
+        .attr("x", barWidth / 2)              // Center horizontally
+        .attr("y", barHeight + barMargin.bottom - 5); // Position at bottom
+
     // --- 2. BIN DATA ---
     const ageBins = [
         { key: "0-16", min: 0, max: 16 },
@@ -562,7 +611,12 @@ function updateDeathBarChart(filteredData) {
     barChartSvg.select(".x-axis")
         .attr("transform", `translate(0, ${barHeight})`)
         .transition().duration(300)
-        .call(d3.axisBottom(xBarScale));
+        .call(d3.axisBottom(xBarScale))
+        .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.8em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-45)");
 
     barChartSvg.select(".y-axis")
         .transition().duration(300)
@@ -601,42 +655,4 @@ function updateDeathBarChart(filteredData) {
         })
         .on("mousemove", moveTooltip)
         .on("mouseout", hideTooltip);
-}
-
-// --- Line Chart Tooltip Handler ---
-function onDeathLineChartMousemove(event, data) {
-    if (data.length === 0) return;
-
-    let lineHeight = 300 - lineMargin.top - lineMargin.bottom;
-    
-    const x0 = xLine.invert(d3.pointer(event)[0]);
-    const bisectDate = d3.bisector(d => d.Date).left;
-    
-    const i = bisectDate(data, x0, 1);
-    const d0 = data[i - 1];
-    const d1 = data[i];
-    
-    let d;
-    if (d0 && d1) {
-        d = (x0 - d0.Date > d1.Date - x0) ? d1 : d0;
-    } else if (d0) {
-        d = d0;
-    } else if (d1) {
-        d = d1;
-    } else {
-        return;
-    }
-
-    d3.select(".tooltip-focus")
-      .attr("transform", `translate(${xLine(d.Date)},0)`)
-      .select("line")
-      .attr("y2", lineHeight);
-    
-    tooltip.html(`
-        <strong>${d3.timeFormat("%B %Y")(d.Date)}</strong><br/>
-        Fatalities: ${d.NumberOfFatalities.toLocaleString()}<br/>
-        Fatal Crashes: ${d.NumberOfFatalCrashes.toLocaleString()}
-    `)
-    .style("left", (event.pageX + 15) + "px")
-    .style("top", (event.pageY - 10) + "px");
 }

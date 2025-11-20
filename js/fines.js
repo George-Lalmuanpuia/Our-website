@@ -41,7 +41,7 @@ function setupFinesFilters() {
 
 // --- BAR CHART (AGE GROUP) SETUP (Unchanged) ---
 function setupBarChart() {
-    barMargin = { top: 20, right: 30, bottom: 60, left: 60 };
+    barMargin = { top: 20, right: 30, bottom: 60, left: 75 };
     const container = d3.select("#bar-chart-container");
     if (container.empty()) {
         console.error("Bar chart container not found.");
@@ -318,10 +318,9 @@ function updateBarChart(data, barMetric, selectedJurisdiction) {
 // --- ADDED: Map Update Function ---
 function updateFinesMap(data, barMetric, selectedJurisdiction) {
     // 1. Aggregate data
-    // We use the filtered data 'data' passed into the function
     const aggregated = d3.rollups(
         data,
-        v => d3.sum(v, d => d[barMetric]), // Sum the selected metric (FINES, ARRESTS, or CHARGES)
+        v => d3.sum(v, d => d[barMetric]), 
         d => d.JURISDICTION
     );
     const finesByState = new Map(aggregated);
@@ -329,12 +328,11 @@ function updateFinesMap(data, barMetric, selectedJurisdiction) {
     // 2. Set color scale
     const metricLabel = barMetric.charAt(0).toUpperCase() + barMetric.slice(1).toLowerCase();
     
-    // Pick a color scheme based on the metric
     const colorScheme = (barMetric === 'FINES') ? d3.schemeBlues[9] :
                       (barMetric === 'ARRESTS') ? d3.schemeReds[9] :
                       d3.schemeGreens[9];
                       
-    const maxVal = d3.max(finesByState.values()) || 1; // Get max value for domain
+    const maxVal = d3.max(finesByState.values()) || 1; 
     
     mapColorScale.domain([0, maxVal]).range(colorScheme);
 
@@ -345,11 +343,11 @@ function updateFinesMap(data, barMetric, selectedJurisdiction) {
             const count = finesByState.get(stateAbbr) || 0;
             return (count === 0) ? "#e5e7eb" : mapColorScale(count);
         })
-        .attr("class", d => { // Add 'selected' class if matching dropdown
+        .attr("class", d => { 
             const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
             return `state ${selectedJurisdiction === stateAbbr ? "selected" : ""}`;
         })
-        .on("mouseover", (event, d) => { // Update tooltip
+        .on("mouseover", (event, d) => { 
             const stateName = d.properties.STATE_NAME;
             const stateAbbr = reverseStateNameMapping[stateName];
             const count = finesByState.get(stateAbbr) || 0;
@@ -359,34 +357,76 @@ function updateFinesMap(data, barMetric, selectedJurisdiction) {
                 Total ${metricLabel}: ${count.toLocaleString()}
             `);
         });
+
+    // --- 4. ADDED: Draw Text Labels on Map ---
+    const colorRange = mapColorScale.range();
+    const splitIndex = Math.floor(colorRange.length / 2); 
+    const labelFormat = d3.format(".2s"); // Format large numbers like 15k, 1.5M
+
+    mapSvg.selectAll(".state-label")
+        .data(geoData.features, d => d.properties.STATE_NAME)
+        .join(
+            enter => enter.append("text")
+                .attr("class", "state-label")
+                .attr("pointer-events", "none")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .attr("font-size", "10px")
+                .style("font-weight", "bold")
+                .style("paint-order", "stroke") 
+                .attr("stroke-width", "3px")    
+                .attr("stroke-linejoin", "round")
+                .attr("x", d => mapPath.centroid(d)[0])
+                .attr("y", d => mapPath.centroid(d)[1]),
+            update => update
+        )
+        .text(d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const count = finesByState.get(stateAbbr) || 0;
+            return count > 0 ? labelFormat(count) : "";
+        })
+        .attr("fill", d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const count = finesByState.get(stateAbbr) || 0;
+            const color = mapColorScale(count);
+            const colorIndex = colorRange.indexOf(color);
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "white" : "#374151";
+        })
+        .attr("stroke", d => {
+            const stateAbbr = reverseStateNameMapping[d.properties.STATE_NAME];
+            const count = finesByState.get(stateAbbr) || 0;
+            const color = mapColorScale(count);
+            const colorIndex = colorRange.indexOf(color);
+            return (colorIndex !== -1 && colorIndex >= splitIndex) ? "#374151" : "white";
+        });
     
-    // 4. Update Legend
+    // 5. Update Legend
     const legend = mapSvg.select(".legendQuant");
-    legend.selectAll("*").remove(); // Clear old legend
+    legend.selectAll("*").remove(); 
     
     const legendColors = mapColorScale.range();
     const legendWidth = mapWidth * 0.9 / legendColors.length;
-    const legendFormat = d3.format(".2s"); // Format for large numbers (e.g., 1.5k)
+    const legendFormat = d3.format(".2s"); 
 
     legend.selectAll("rect")
         .data(legendColors)
         .join("rect")
         .attr("x", (d, i) => i * legendWidth)
-        .attr("y", 0)
+        .attr("y", 20)
         .attr("width", legendWidth)
         .attr("height", 10)
         .attr("fill", d => d);
     
     legend.append("text")
         .attr("x", 0)
-        .attr("y", 25)
+        .attr("y", 43)
         .attr("fill", "#374151")
         .style("font-size", "12px")
         .text(legendFormat(0));
     
     legend.append("text")
         .attr("x", mapWidth * 0.9)
-        .attr("y", 25)
+        .attr("y", 43)
         .attr("fill", "#374151")
         .style("font-size", "12px")
         .style("text-anchor", "end")
